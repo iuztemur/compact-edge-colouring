@@ -17,39 +17,63 @@ def is_compact(node_colouring):
     expected_range = range(range_start, range_start + len(node_colouring.values()))
     return all(colour in expected_range for colour in node_colouring.values())
 
-print 'just starting'
+def format_colouring(colouring):
+    return {tuple(sorted(key)) : colouring[key] for key in colouring}
+
+def format_edges(edges):
+    return [tuple(sorted(edge)) for edge in edges]
+
+def init_nodes(graph):
+    nodes = graph.nodes()
+    degrees = [graph.degree(node) for node in nodes]
+    sorted_by_degrees = [node for (degree, node) in sorted(zip(degrees, nodes), reverse=True)]
+    return sorted_by_degrees
+
+def edges_remaining(graph, colouring):
+    c0 = Counter(elem[0] for elem in colouring.keys())
+    c1 = Counter(elem[1] for elem in colouring.keys())
+    return {node: graph.degree(node) - c0[node] - c1[node] for node in graph.nodes()}
+
+def nodes_remaining(graph, edges_remaining):
+    nodes_remaining = [node for node in graph.nodes() if edges_remaining[node] > 0]
+    nodes_remaining.sort(key = lambda x : edges_remaining[x])
+    return nodes_remaining
+
+def node_colouring(graph, colouring, node):
+    node_colouring = {}
+    for edge in format_edges(graph.edges(node)):
+        if edge in colouring:
+            node_colouring[edge] = colouring[edge]
+        else:
+            node_colouring[edge] = None
+    return node_colouring
 
 graph = read_graph_from_file('graph1')
-nodes = graph.nodes()
-degrees = [graph.degree(node) for node in nodes]
-nodes_sorted_by_degrees = [node for (degree, node) in sorted(zip(degrees, nodes), reverse=True)]
-print 'all nodes sorted by degrees:', nodes_sorted_by_degrees
+nodes = init_nodes(graph)
+print '0. nodes sorted by degrees'
+print [(node, graph.degree(node)) for node in nodes]
 
-# init decision tree
-root_node = SearchNode()
+root_search_node = SearchNode()
 
-# propose colouring for the first element in this list
-edges = graph.edges(nodes_sorted_by_degrees[0])
-colouring = {edge : edges.index(edge) for edge in edges}
-print '\n1st colouring:', colouring
+edges = graph.edges(nodes[0])
+colouring = format_colouring({edge: edges.index(edge) for edge in edges})
+print '\n1. colouring'
+print colouring
 
-# add node to tree
-current_search_node = SearchNode(colouring, root_node)
-root_node.add_child(current_search_node)
+current_search_node = SearchNode(colouring, root_search_node)
+root_search_node.add_child(current_search_node)
+print 'added as leaf'
 
-# sort the rest of nodes by number of colours yet to be assigned
-nodes_remaining = nodes_sorted_by_degrees[1:]
-c0 = Counter(elem[0] for elem in colouring.keys())
-c1 = Counter(elem[1] for elem in colouring.keys())
-edges_remaining = {node : graph.degree(node) - c0[node] - c1[node] 
-    for node in nodes_remaining}
-print '\nremaining edges:', edges_remaining
-nodes_remaining.sort(key = lambda x : edges_remaining[x])
-print 'nodes sorted by number of edges yet to be coloured:'
-print nodes_remaining
+edges_remaining = edges_remaining(graph, colouring)
+nodes_remaining = nodes_remaining(graph, edges_remaining)
+print '\nnodes sorted by remaining edges'
+print [(node, edges_remaining[node]) for node in nodes_remaining]
 
-# check possible colouring for node with the smallest number 
-# of colours yet to be assigned
 current_node = nodes_remaining[0]
-print '\ncurrently looking at node', current_node
+print 'pick', current_node
+node_colours = node_colouring(graph, colouring, current_node)
+print 'colours:', node_colours
 
+# propose colouring for current node
+
+print 
