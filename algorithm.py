@@ -84,9 +84,21 @@ node_colours = node_colouring(graph, colouring, current_node)
 print 'picking', current_node, '- coloured', node_colours
 compact = 'yes' if is_compact(node_colours) else 'no'
 print 'compact?', compact
-possible = possible_compact(node_colours)
-print 'possible?', possible
+possible = 'yes' if possible_compact(node_colours) else 'no'
+print 'possible?', propose
 
-# propose colouring for current node
+""" possible colourings for current node
+1 None 3 None None      :e.g. nodes_colouring
+
+1 3 None None None      :here one gap to fill
+
+1 2 3 None None         :fill in the gap
+
+0 1 2 3 4
+1 2 3 4 5               :moving the interval
+
+                        :and then permutations
+
+2intervals x 3x2x1      :number of options"""
 
 print 
