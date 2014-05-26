@@ -1,5 +1,7 @@
 from opener import read_graph_from_file
 from collections import Counter
+from pprint import pprint
+import operator
 
 class SearchNode:
     def __init__(self, colouring=None, prev=None):
@@ -11,6 +13,7 @@ class SearchNode:
         self.children.append(child)
 
 def is_compact(node_colouring):
+    node_colouring = {k: v for k, v in node_colouring.items() if v != None}
     if len(node_colouring) in [0, 1]:
         return True
     range_start = min(node_colouring.values())
@@ -48,17 +51,24 @@ def node_colouring(graph, colouring, node):
             node_colouring[edge] = None
     return node_colouring
 
+def possible_compact(node_colours):
+    no_of_edges = len(node_colours)
+    node_colours = {k: v for k, v in node_colours.items() if v != None}
+    max_colour = max(node_colours.values())
+    min_colour = min(node_colours.values())
+    return max_colour - min_colour < no_of_edges
+
 graph = read_graph_from_file('graph1')
 nodes = init_nodes(graph)
-print '0. nodes sorted by degrees'
+print '\n0. nodes sorted by degrees'
 print [(node, graph.degree(node)) for node in nodes]
 
 root_search_node = SearchNode()
 
-edges = graph.edges(nodes[0])
-colouring = format_colouring({edge: edges.index(edge) for edge in edges})
+edges = format_edges(graph.edges(nodes[0]))
+colouring = {edge: edges.index(edge) for edge in edges}
 print '\n1. colouring'
-print colouring
+pprint(colouring)
 
 current_search_node = SearchNode(colouring, root_search_node)
 root_search_node.add_child(current_search_node)
@@ -70,9 +80,12 @@ print '\nnodes sorted by remaining edges'
 print [(node, edges_remaining[node]) for node in nodes_remaining]
 
 current_node = nodes_remaining[0]
-print 'pick', current_node
 node_colours = node_colouring(graph, colouring, current_node)
-print 'colours:', node_colours
+print 'picking', current_node, '- coloured', node_colours
+compact = 'yes' if is_compact(node_colours) else 'no'
+print 'compact?', compact
+possible = possible_compact(node_colours)
+print 'possible?', possible
 
 # propose colouring for current node
 
