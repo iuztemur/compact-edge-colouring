@@ -20,5 +20,13 @@ class TestIsCompactFunction(unittest.TestCase):
         self.assertFalse(algorithm.is_compact({('ee'): None, ('eb'): None, \
                                               ('ec'): 4, ('ed'): 1}))
 
+    def test_possible_colouring_not_zero_case(self):
+        self.assertTrue(algorithm.possible_compact({('ee'): None, \
+                            ('eb'): None, ('ec'): 5,    ('ed'): 3}))
+
+    def test_not_possible_colouring_not_zero_case(self):
+        self.assertFalse(algorithm.possible_compact({('ee'): 7, \
+                            ('eb'): None, ('ec'): 4,    ('ed'): 3}))
+
 if __name__ == '__main__':
     unittest.main()
