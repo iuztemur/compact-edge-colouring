@@ -40,14 +40,13 @@ class TestIsCompactFunction(unittest.TestCase):
         colours = {'a': 1, 'b': None}
         gap = algorithm.gap_to_fill(colours)
         surr = algorithm.surrounding(colours, gap)
-        self.assertEqual(surr, [(0,), (2,)])
+        self.assertEqual(surr, [[0], [2]])
  
     def test_surrounding_of_two(self):
         colours = {'a': 1, 'b': 3, 'c': None, 'd': None}
         gap = algorithm.gap_to_fill(colours)
         surr = algorithm.surrounding(colours, gap)
-        self.assertEqual(surr, [(0,), (4,)])
+        self.assertEqual(surr, [[0], [4]])
 
 if __name__ == '__main__':
     unittest.main()
-    

@@ -2,6 +2,7 @@ from opener import read_graph_from_file
 from collections import Counter
 from pprint import pprint
 import operator
+import itertools
 
 class SearchNode:
     def __init__(self, colouring=None, prev=None):
@@ -66,7 +67,7 @@ def gap_to_fill(node_colours):
                 if c not in node_colours.values()]
 
 def none_edges(node_colours):
-    return len([c for c in node_colours.values() if c == None])
+    return [k for k,v in node_colours.items() if v == None]
 
 def min_edge_colour(node_colours):
     node_colours = {k: v for k, v in node_colours.items() if v != None}
@@ -77,24 +78,25 @@ def max_edge_colour(node_colours):
     return max(node_colours.values())
 
 def surrounding(node_colours, gapping):
-    edges_for_surr = none_edges(node_colours) - len(gapping)
+    edges_for_surr = len(none_edges(node_colours)) - len(gapping)
     min_colour = min_edge_colour(node_colours)
     max_colour = max_edge_colour(node_colours)
     places_to_the_left = min(min_colour, edges_for_surr)
     places_to_the_right = edges_for_surr - places_to_the_left
-    print 'places_to_the_left:', places_to_the_left
-    print 'places_to_the_right:', places_to_the_right
     surrs = []
     while places_to_the_left >= 0:
-        surr = tuple(range(min_colour - places_to_the_left, min_colour))
-        surr += tuple(range(max_colour + 1, max_colour + 1 + edges_for_surr - places_to_the_left))
+        surr =  range(min_colour - places_to_the_left, min_colour)
+        surr += range(max_colour + 1, \
+                    max_colour + 1 + edges_for_surr - places_to_the_left)
         surrs.append(surr)
         places_to_the_left -= 1
-        print 'places_to_the_left:', places_to_the_left
         places_to_the_right += 1
-        print 'places_to_the_right:', places_to_the_right
-    print surrs
     return surrs
+
+def remaining_colours(node_colours):
+    gap = gap_to_fill(node_colours)
+    surrs = surrounding(node_colours, gap)
+    return [s + gap for s in surrs]
 
 graph = read_graph_from_file('graph1')
 nodes = init_nodes(graph)
@@ -137,16 +139,26 @@ print 'possible?', possible
 
                         :and then permutations
 
-2intervals x 3x2x1      :number of options"""
-
-gap = gap_to_fill(node_colours)
-print 'gap to fill:', gap
-around = surrounding(node_colours, gap)
-print 'surrounding:', around
+2 intervals x 3x2x1     :number of options"""
 
 #test_colors = { 'a': None, 'b': None, 'c': 3, 'd': 4 }
-test_colors = { 'a': None, 'b': None, 'c': 3, 'd': 4, 'e': None }
-print '--\ntest\n--'
-surrounding(test_colors, gap_to_fill(test_colors) )
+#test_colors = { 'a': None, 'b': None, 'c': 3, 'd': 4, 'e': None }
+test_colors2 = { 'a': None, 'b': None, 'c': 2, 'd': 5, 'e': None }
+#print '--\ntest\n--'
+#print surrounding(test_colors, gap_to_fill(test_colors) )
+#print 'remaining colours  ', remaining_colours(test_colors)
+#print 'gap', gap_to_fill(test_colors2)
+rem = remaining_colours(test_colors2)
+print 'remaining colours', rem
+nons = none_edges(test_colors2)
+print 'none edges       ', nons
+produtto = list(itertools.product(nons, rem[0]))
+produttoni = [list(group) for key,group in itertools.groupby(produtto,operator.itemgetter(0))]
+proddo = list(itertools.product(produttoni[0], produttoni[1], produttoni[2]))
+print 'possible colourings'
+pprint(proddo)
+# ...and from this can take first element and trim until empty
+
+#print 'remaining colours', remaining_colours(node_colours)
 
 print 
