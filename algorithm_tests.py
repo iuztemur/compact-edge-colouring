@@ -25,8 +25,28 @@ class TestIsCompactFunction(unittest.TestCase):
                             ('eb'): None, ('ec'): 5,    ('ed'): 3}))
 
     def test_not_possible_colouring_not_zero_case(self):
-        self.assertFalse(algorithm.possible_compact({('ee'): 7, \
-                            ('eb'): None, ('ec'): 4,    ('ed'): 3}))
+        self.assertFalse(algorithm.possible_compact({('ee'): 10, \
+                            ('eb'): None, ('ec'): 4, ('ed'): 3}))
+
+    def test_gap_to_fill_of_two(self):
+        self.assertEqual(algorithm.gap_to_fill({('a'): 0, ('b'): 3, \
+                    ('c'): None, ('d'): None}), [1, 2])
+    
+    def test_two_gaps_to_fill(self):
+        self.assertEqual(algorithm.gap_to_fill({('a'): 0, ('b'): 2, \
+                    ('c'): None, ('d'): None, ('e'): 4}), [1, 3])
+
+    def test_surrounding_of_one(self):
+        colours = {'a': 1, 'b': None}
+        gap = algorithm.gap_to_fill(colours)
+        surr = algorithm.surrounding(colours, gap)
+        self.assertEqual(surr, [(0,), (2,)])
+ 
+    def test_surrounding_of_two(self):
+        colours = {'a': 1, 'b': 3, 'c': None, 'd': None}
+        gap = algorithm.gap_to_fill(colours)
+        surr = algorithm.surrounding(colours, gap)
+        self.assertEqual(surr, [(0,), (4,)])
 
 if __name__ == '__main__':
     unittest.main()
