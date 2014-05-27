@@ -58,6 +58,44 @@ def possible_compact(node_colours):
     min_colour = min(node_colours.values())
     return max_colour - min_colour < no_of_edges
 
+def gap_to_fill(node_colours):
+    node_colours = {k: v for k, v in node_colours.items() if v != None}
+    max_colour = max(node_colours.values())
+    min_colour = min(node_colours.values())
+    return [c for c in range(min_colour + 1, max_colour) \
+                if c not in node_colours.values()]
+
+def none_edges(node_colours):
+    return len([c for c in node_colours.values() if c == None])
+
+def min_edge_colour(node_colours):
+    node_colours = {k: v for k, v in node_colours.items() if v != None}
+    return min(node_colours.values())
+
+def max_edge_colour(node_colours):
+    node_colours = {k: v for k, v in node_colours.items() if v != None}
+    return max(node_colours.values())
+
+def surrounding(node_colours, gapping):
+    edges_for_surr = none_edges(node_colours) - len(gapping)
+    min_colour = min_edge_colour(node_colours)
+    max_colour = max_edge_colour(node_colours)
+    places_to_the_left = min(min_colour, edges_for_surr)
+    places_to_the_right = edges_for_surr - places_to_the_left
+    print 'places_to_the_left:', places_to_the_left
+    print 'places_to_the_right:', places_to_the_right
+    surrs = []
+    while places_to_the_left >= 0:
+        surr = tuple(range(min_colour - places_to_the_left, min_colour))
+        surr += tuple(range(max_colour + 1, max_colour + 1 + edges_for_surr - places_to_the_left))
+        surrs.append(surr)
+        places_to_the_left -= 1
+        print 'places_to_the_left:', places_to_the_left
+        places_to_the_right += 1
+        print 'places_to_the_right:', places_to_the_right
+    print surrs
+    return surrs
+
 graph = read_graph_from_file('graph1')
 nodes = init_nodes(graph)
 print '\n0. nodes sorted by degrees'
@@ -85,9 +123,9 @@ print 'picking', current_node, '- coloured', node_colours
 compact = 'yes' if is_compact(node_colours) else 'no'
 print 'compact?', compact
 possible = 'yes' if possible_compact(node_colours) else 'no'
-print 'possible?', propose
+print 'possible?', possible
 
-""" possible colourings for current node
+""" propose colourings for current node
 1 None 3 None None      :e.g. nodes_colouring
 
 1 3 None None None      :here one gap to fill
@@ -100,5 +138,15 @@ print 'possible?', propose
                         :and then permutations
 
 2intervals x 3x2x1      :number of options"""
+
+gap = gap_to_fill(node_colours)
+print 'gap to fill:', gap
+around = surrounding(node_colours, gap)
+print 'surrounding:', around
+
+#test_colors = { 'a': None, 'b': None, 'c': 3, 'd': 4 }
+test_colors = { 'a': None, 'b': None, 'c': 3, 'd': 4, 'e': None }
+print '--\ntest\n--'
+surrounding(test_colors, gap_to_fill(test_colors) )
 
 print 
