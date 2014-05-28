@@ -14,36 +14,56 @@ class SearchNode:
         self.children.append(child)
 
 def is_compact(node_colouring):
+    """Check if given colouring for node is compact.
+    """
     node_colouring = {k: v for k, v in node_colouring.items() if v != None}
     if len(node_colouring) in [0, 1]:
         return True
     range_start = min(node_colouring.values())
-    expected_range = range(range_start, range_start + len(node_colouring.values()))
+    expected_range = range(range_start, range_start \
+                                + len(node_colouring.values()))
     return all(colour in expected_range for colour in node_colouring.values())
 
 def format_colouring(colouring):
-    return {tuple(sorted(key)) : colouring[key] for key in colouring}
+    """Put nodes in edges signatures within colouring in alphabetic order.
+    """
+    return {tuple(sorted(key)): colouring[key] for key in colouring}
 
 def format_edges(edges):
+    """Put nodes in edges signatures in alphabetic order.
+    """
     return [tuple(sorted(edge)) for edge in edges]
 
 def init_nodes(graph):
+    """Form list of graph nodes sorted by degrees.
+    """
     nodes = graph.nodes()
     degrees = [graph.degree(node) for node in nodes]
-    sorted_by_degrees = [node for (degree, node) in sorted(zip(degrees, nodes), reverse=True)]
+    sorted_by_degrees = [node for (degree, node) \
+                in sorted(zip(degrees, nodes), reverse=True)]
     return sorted_by_degrees
 
 def edges_remaining(graph, colouring):
+    """Count edges yet to be coloured for each node. Put the counts in dict.
+    """
     c0 = Counter(elem[0] for elem in colouring.keys())
     c1 = Counter(elem[1] for elem in colouring.keys())
-    return {node: graph.degree(node) - c0[node] - c1[node] for node in graph.nodes()}
+    return {node: graph.degree(node) - c0[node] - c1[node] \
+                    for node in graph.nodes()}
 
 def nodes_remaining(graph, edges_remaining):
-    nodes_remaining = [node for node in graph.nodes() if edges_remaining[node] > 0]
+    """Form list of nodes sorted by adjacent edges yet to be coloured 
+       with 0 values excluded.
+    """
+    nodes_remaining = [node for node in graph.nodes() \
+                            if edges_remaining[node] > 0]
     nodes_remaining.sort(key = lambda x : edges_remaining[x])
     return nodes_remaining
 
 def node_colouring(graph, colouring, node):
+    """Form dict representation of colouring adjacent to given node. 
+       None for not coloured yet.
+    """
     node_colouring = {}
     for edge in format_edges(graph.edges(node)):
         if edge in colouring:
@@ -53,6 +73,8 @@ def node_colouring(graph, colouring, node):
     return node_colouring
 
 def possible_compact(node_colours):
+    """Check if compact colouring is still possible for node.
+    """
     no_of_edges = len(node_colours)
     node_colours = {k: v for k, v in node_colours.items() if v != None}
     max_colour = max(node_colours.values())
@@ -60,6 +82,8 @@ def possible_compact(node_colours):
     return max_colour - min_colour < no_of_edges
 
 def gap_to_fill(node_colours):
+    """Identify colours needed to fill the interval.
+    """
     node_colours = {k: v for k, v in node_colours.items() if v != None}
     max_colour = max(node_colours.values())
     min_colour = min(node_colours.values())
@@ -67,17 +91,33 @@ def gap_to_fill(node_colours):
                 if c not in node_colours.values()]
 
 def none_edges(node_colours):
+    """Form list of edges yet to be coloured for node.
+    """
     return [k for k,v in node_colours.items() if v == None]
 
 def min_edge_colour(node_colours):
+    """Identify current minimum in colouring for node.
+    """
     node_colours = {k: v for k, v in node_colours.items() if v != None}
     return min(node_colours.values())
 
 def max_edge_colour(node_colours):
+    """Identify current maximum in colouring for node.
+    """
     node_colours = {k: v for k, v in node_colours.items() if v != None}
     return max(node_colours.values())
 
 def surrounding(node_colours, gapping):
+    """Identify options available apart from completing the interval.
+
+    Say we have colouring for node: [2, 4, None, None, None]. These goes for
+    2 edges with colours already assigned and 3 yet to be coloured. First,
+    we need to complement the interval: [2, 3, 4] and we need 1 edge for that
+    which in turn leaves us with 2 edges yet to be coloured. They can extend
+    the interval in a number of ways, like [0, 1, 2, 3, 4] or [1, 2, 3, 4, 5].
+
+    The purpose of this function is to identify these possible extentions.
+    """
     edges_for_surr = len(none_edges(node_colours)) - len(gapping)
     min_colour = min_edge_colour(node_colours)
     max_colour = max_edge_colour(node_colours)
@@ -89,14 +129,49 @@ def surrounding(node_colours, gapping):
         surr += range(max_colour + 1, \
                     max_colour + 1 + edges_for_surr - places_to_the_left)
         surrs.append(surr)
-        places_to_the_left -= 1
+        places_to_the_left  -= 1
         places_to_the_right += 1
     return surrs
 
 def remaining_colours(node_colours):
+    """Identify possible sets of colours for the remaining edges.
+    """
     gap = gap_to_fill(node_colours)
     surrs = surrounding(node_colours, gap)
-    return [s + gap for s in surrs]
+    return [sorted(s + gap) for s in surrs]
+
+def edges_to_colours_matchings(blanks, colours):
+    """Identify all combinations for given bland edges and colours.
+    """
+    return [sorted(zip(x,colours)) for x in itertools.permutations(blanks)]
+
+def edges_to_colours_ideas_matchings(blanks, colours_ideas):
+    """Go through all ideas for colours and match them against blank edges.
+    """
+    edge_colour_pairs = []
+    for colours_idea in colours_ideas:
+        edge_colour_pairs += \
+            edges_to_colours_matchings(blanks, colours_idea)
+    return edge_colour_pairs
+
+def edges_to_colours_ideas_matchings_as_dict(matchings_lists_list):
+    """Convert colours to blank edges matches into list of dictionaries
+       each being one matching.
+    """
+    matchings_dicts_list = []
+    for matching_list in matchings_lists_list:
+        matchings_dicts_list.append( \
+            {x[0]: x[1] for x in matching_list})
+    return matchings_dicts_list
+
+def remaining_colourings(node_colours):
+    """Get all possible colourings of remaining blank egdes.
+    """
+    blank_edges       = none_edges(node_colours)
+    colours_ideas     = remaining_colours(node_colours)
+    edge_colour_pairs = \
+        edges_to_colours_ideas_matchings(blank_edges, colours_ideas)
+    return edges_to_colours_ideas_matchings_as_dict(edge_colour_pairs)
 
 graph = read_graph_from_file('graph1')
 nodes = init_nodes(graph)
@@ -126,39 +201,8 @@ compact = 'yes' if is_compact(node_colours) else 'no'
 print 'compact?', compact
 possible = 'yes' if possible_compact(node_colours) else 'no'
 print 'possible?', possible
+print 'possible colourings', remaining_colourings(node_colours)
 
-""" propose colourings for current node
-1 None 3 None None      :e.g. nodes_colouring
-
-1 3 None None None      :here one gap to fill
-
-1 2 3 None None         :fill in the gap
-
-0 1 2 3 4
-1 2 3 4 5               :moving the interval
-
-                        :and then permutations
-
-2 intervals x 3x2x1     :number of options"""
-
-#test_colors = { 'a': None, 'b': None, 'c': 3, 'd': 4 }
-#test_colors = { 'a': None, 'b': None, 'c': 3, 'd': 4, 'e': None }
-test_colors2 = { 'a': None, 'b': None, 'c': 2, 'd': 5, 'e': None }
-#print '--\ntest\n--'
-#print surrounding(test_colors, gap_to_fill(test_colors) )
-#print 'remaining colours  ', remaining_colours(test_colors)
-#print 'gap', gap_to_fill(test_colors2)
-rem = remaining_colours(test_colors2)
-print 'remaining colours', rem
-nons = none_edges(test_colors2)
-print 'none edges       ', nons
-produtto = list(itertools.product(nons, rem[0]))
-produttoni = [list(group) for key,group in itertools.groupby(produtto,operator.itemgetter(0))]
-proddo = list(itertools.product(produttoni[0], produttoni[1], produttoni[2]))
-print 'possible colourings'
-pprint(proddo)
 # ...and from this can take first element and trim until empty
-
-#print 'remaining colours', remaining_colours(node_colours)
 
 print 
