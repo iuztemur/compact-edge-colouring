@@ -13,10 +13,10 @@ logger = logging.getLogger(__name__)
 def is_compact(node_colouring):
     """Check if given colouring for node is compact.
     """
-    node_colouring = {k: v for k, v in node_colouring.items()}
+    node_colouring2 = {k: v for k, v in node_colouring.items() if v != None}
     if len(node_colouring) in [0, 1]:
         return True
-    range_start = min(node_colouring.values())
+    range_start = min(node_colouring2.values())
     expected_range = range(range_start, range_start \
                                 + len(node_colouring.values()))
     return all(colour in expected_range for colour in node_colouring.values())
@@ -249,8 +249,8 @@ logger.info('Remaining nodes can still be compact? %s', can_be_compact)
 current_node = nodes_remaining[0]
 node_colours = node_colouring(graph, colouring, current_node)
 logger.info('Picking node %s: coloured %s', current_node, node_colours)
-#compact = 'Yes' if is_compact(node_colours) else 'no'
-#logger.info('Compact?  %s', compact)
+compact = 'Yes' if is_compact(node_colours) else 'No'
+logger.info('Compact?  %s', compact)
 possible = 'Yes' if possible_compact(node_colours) else 'no'
 logger.info('Possible? %s', possible)
 logger.info('Possible colourings: %s', pprint.pformat(remaining_colourings(node_colours)))
