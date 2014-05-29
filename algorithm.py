@@ -1,8 +1,12 @@
 from opener import read_graph_from_file
 from collections import Counter
-from pprint import pprint
+import pprint
 import operator
 import itertools
+
+import logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 class SearchNode:
     def __init__(self, colouring=None, prev=None):
@@ -12,6 +16,9 @@ class SearchNode:
 
     def add_child(self, child):
         self.children.append(child)
+
+    def possible_leaf_colourings(possibilities):
+        self.possibilities = possibilities
 
 def is_compact(node_colouring):
     """Check if given colouring for node is compact.
@@ -173,36 +180,37 @@ def remaining_colourings(node_colours):
         edges_to_colours_ideas_matchings(blank_edges, colours_ideas)
     return edges_to_colours_ideas_matchings_as_dict(edge_colour_pairs)
 
+logger.info('Reading graph from file')
+
 graph = read_graph_from_file('graph1')
 nodes = init_nodes(graph)
-print '\n0. nodes sorted by degrees'
-print [(node, graph.degree(node)) for node in nodes]
-
-root_search_node = SearchNode()
+logger.info('Nodes sorted by degrees: %s', [(node, graph.degree(node)) for node in nodes])
 
 edges = format_edges(graph.edges(nodes[0]))
 colouring = {edge: edges.index(edge) for edge in edges}
-print '\n1. colouring'
-pprint(colouring)
+logger.info('Possible colourings for node %s: %s', nodes[0], \
+                pprint.pformat(colouring))
 
+root_search_node = SearchNode()
 current_search_node = SearchNode(colouring, root_search_node)
 root_search_node.add_child(current_search_node)
-print 'added as leaf'
 
 edges_remaining = edges_remaining(graph, colouring)
 nodes_remaining = nodes_remaining(graph, edges_remaining)
-print '\nnodes sorted by remaining edges'
-print [(node, edges_remaining[node]) for node in nodes_remaining]
+logger.info('nodes sorted by remaining edges: %s', \
+    pprint.pformat( [(node, edges_remaining[node])  \
+                            for node in nodes_remaining] ) )
 
 current_node = nodes_remaining[0]
 node_colours = node_colouring(graph, colouring, current_node)
-print 'picking', current_node, '- coloured', node_colours
+logger.info('picking %s', current_node)
+logger.info('coloured: %s', node_colours)
 compact = 'yes' if is_compact(node_colours) else 'no'
-print 'compact?', compact
+logger.info('compact?  %s', compact)
 possible = 'yes' if possible_compact(node_colours) else 'no'
-print 'possible?', possible
-print 'possible colourings', remaining_colourings(node_colours)
+logger.info('possible? %s', possible)
+logger.info('possible colourings: %s', pprint.pformat(remaining_colourings(node_colours)))
 
 # ...and from this can take first element and trim until empty
 
-print 
+#print 
