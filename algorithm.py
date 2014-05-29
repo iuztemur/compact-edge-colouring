@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def is_compact(node_colouring):
     """Check if given colouring for node is compact.
     """
-    node_colouring = {k: v for k, v in node_colouring.items() if v != None}
+    node_colouring = {k: v for k, v in node_colouring.items()}
     if len(node_colouring) in [0, 1]:
         return True
     range_start = min(node_colouring.values())
@@ -74,6 +74,8 @@ def possible_compact(node_colours):
     """
     no_of_edges = len(node_colours)
     node_colours = {k: v for k, v in node_colours.items() if v != None}
+    if len(node_colours) == 0:
+        return True
     max_colour = max(node_colours.values())
     min_colour = min(node_colours.values())
     return max_colour - min_colour < no_of_edges
@@ -171,6 +173,8 @@ def remaining_colourings(node_colours):
     return edges_to_colours_ideas_matchings_as_dict(edge_colour_pairs)
 
 def possibilities(graph, node):
+    """Get all possible initial colourings for given node of highest degree.
+    """
     edges = format_edges(graph.edges(node))
     colours = range(len(edges))
     logger.debug('Checking possibilities for node %s', node)
@@ -180,6 +184,13 @@ def possibilities(graph, node):
                         edges_to_colours_ideas_matchings(edges, [colours]))
     logger.debug('Possibilities are:\n%s\n', pprint.pformat(possibilities))
     return possibilities
+
+def those_nodes_can_be_compact(graph, colouring, those_nodes):
+    for this_node in those_nodes:
+        this_node_colours = node_colouring(graph, colouring, this_node)
+        if not possible_compact(this_node_colours):
+            return False
+    return True
 
 class SearchNode:
     def __init__(self, colouring=None, prev=None):
@@ -216,15 +227,14 @@ logger.info('Inserted all possible node %s colourings into root Search Node', \
              nodes_by_degrees[0])
 
 next_possible_colouring = root_search_node.pop_possibility()
+colouring = next_possible_colouring
 logger.info('Next possible node %s colouring: %s', \
                nodes_by_degrees[0], pprint.pformat(next_possible_colouring))
 
-colouring = next_possible_colouring
-logger.info('Possible colourings for node %s: %s', \
-                nodes_by_degrees[0], pprint.pformat(colouring))
-
 current_search_node = SearchNode(colouring, root_search_node)
 root_search_node.add_child(current_search_node)
+
+# ... from here I am building the tree for now
 
 edges_remaining = edges_remaining(graph, colouring)
 nodes_remaining = nodes_remaining(graph, edges_remaining)
@@ -232,12 +242,15 @@ logger.info('Nodes sorted by remaining edges: %s', \
     pprint.pformat( [(node, edges_remaining[node])  \
                             for node in nodes_remaining] ) )
 
+can_be_compact = \
+    those_nodes_can_be_compact(graph, colouring, nodes_remaining)
+logger.info('Remaining nodes can still be compact? %s', can_be_compact)
+
 current_node = nodes_remaining[0]
 node_colours = node_colouring(graph, colouring, current_node)
-logger.info('Picking %s', current_node)
-logger.info('Coloured: %s', node_colours)
-compact = 'Yes' if is_compact(node_colours) else 'no'
-logger.info('Compact?  %s', compact)
+logger.info('Picking node %s: coloured %s', current_node, node_colours)
+#compact = 'Yes' if is_compact(node_colours) else 'no'
+#logger.info('Compact?  %s', compact)
 possible = 'Yes' if possible_compact(node_colours) else 'no'
 logger.info('Possible? %s', possible)
 logger.info('Possible colourings: %s', pprint.pformat(remaining_colourings(node_colours)))
