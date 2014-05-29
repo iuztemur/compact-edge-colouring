@@ -10,8 +10,3 @@ def read_graph_from_file(path):
     G = nx.Graph()
     G.add_edges_from(read_edges_from_file(path))
     return G
-
-""" tests
-print "edges read from file: ", read_edges_from_file('graph1')
-print "graph read from file: ", read_graph_from_file('graph1').edges()
-"""
