@@ -1,24 +1,14 @@
-from opener import read_graph_from_file
-from collections import Counter
 import pprint
 import operator
 import itertools
 
+from collections import Counter
+
+from opener import read_graph_from_file
+
 import logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-class SearchNode:
-    def __init__(self, colouring=None, prev=None):
-        self.colouring = colouring
-        self.prev      = prev
-        self.children  = []
-
-    def add_child(self, child):
-        self.children.append(child)
-
-    def possible_leaf_colourings(possibilities):
-        self.possibilities = possibilities
 
 def is_compact(node_colouring):
     """Check if given colouring for node is compact.
@@ -180,36 +170,77 @@ def remaining_colourings(node_colours):
         edges_to_colours_ideas_matchings(blank_edges, colours_ideas)
     return edges_to_colours_ideas_matchings_as_dict(edge_colour_pairs)
 
+def possibilities(graph, node):
+    edges = format_edges(graph.edges(node))
+    colours = range(len(edges))
+    logger.debug('Checking possibilities for node %s', node)
+    logger.debug('Edges adjacent to node: %s', edges)
+    logger.debug('Colours to be matched against those edges: %s', colours)
+    possibilities = edges_to_colours_ideas_matchings_as_dict( \
+                        edges_to_colours_ideas_matchings(edges, [colours]))
+    logger.debug('Possibilities are:\n%s\n', pprint.pformat(possibilities))
+    return possibilities
+
+class SearchNode:
+    def __init__(self, colouring=None, prev=None):
+        self.colouring = colouring
+        self.prev      = prev
+        self.children  = []
+
+    def add_child(self, child):
+        self.children.append(child)
+
+    def possible_leaf_colourings(self, possibilities):
+        self.possibilities = possibilities
+
+    def pop_possibility(self):
+        if len(self.possibilities) == 0:
+            return None
+        possibility = self.possibilities[0]
+        self.possibilities = self.possibilities[1:]
+        logger.debug('Possibilities remaining:\n%s\n', \
+                        pprint.pformat(self.possibilities))
+        return possibility
+
 logger.info('Reading graph from file')
 
 graph = read_graph_from_file('graph1')
-nodes = init_nodes(graph)
-logger.info('Nodes sorted by degrees: %s', [(node, graph.degree(node)) for node in nodes])
-
-edges = format_edges(graph.edges(nodes[0]))
-colouring = {edge: edges.index(edge) for edge in edges}
-logger.info('Possible colourings for node %s: %s', nodes[0], \
-                pprint.pformat(colouring))
+nodes_by_degrees = init_nodes(graph)
+logger.info('Nodes sorted by degrees: %s', \
+    [(node, graph.degree(node)) for node in nodes_by_degrees])
 
 root_search_node = SearchNode()
+root_search_node.possible_leaf_colourings( \
+                    possibilities(graph,nodes_by_degrees[0]))
+logger.info('Inserted all possible node %s colourings into root Search Node', \
+             nodes_by_degrees[0])
+
+next_possible_colouring = root_search_node.pop_possibility()
+logger.info('Next possible node %s colouring: %s', \
+               nodes_by_degrees[0], pprint.pformat(next_possible_colouring))
+
+colouring = next_possible_colouring
+logger.info('Possible colourings for node %s: %s', \
+                nodes_by_degrees[0], pprint.pformat(colouring))
+
 current_search_node = SearchNode(colouring, root_search_node)
 root_search_node.add_child(current_search_node)
 
 edges_remaining = edges_remaining(graph, colouring)
 nodes_remaining = nodes_remaining(graph, edges_remaining)
-logger.info('nodes sorted by remaining edges: %s', \
+logger.info('Nodes sorted by remaining edges: %s', \
     pprint.pformat( [(node, edges_remaining[node])  \
                             for node in nodes_remaining] ) )
 
 current_node = nodes_remaining[0]
 node_colours = node_colouring(graph, colouring, current_node)
-logger.info('picking %s', current_node)
-logger.info('coloured: %s', node_colours)
-compact = 'yes' if is_compact(node_colours) else 'no'
-logger.info('compact?  %s', compact)
-possible = 'yes' if possible_compact(node_colours) else 'no'
-logger.info('possible? %s', possible)
-logger.info('possible colourings: %s', pprint.pformat(remaining_colourings(node_colours)))
+logger.info('Picking %s', current_node)
+logger.info('Coloured: %s', node_colours)
+compact = 'Yes' if is_compact(node_colours) else 'no'
+logger.info('Compact?  %s', compact)
+possible = 'Yes' if possible_compact(node_colours) else 'no'
+logger.info('Possible? %s', possible)
+logger.info('Possible colourings: %s', pprint.pformat(remaining_colourings(node_colours)))
 
 # ...and from this can take first element and trim until empty
 
