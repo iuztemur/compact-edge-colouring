@@ -69,16 +69,23 @@ def node_colouring(graph, colouring, node):
             node_colouring[edge] = None
     return node_colouring
 
+def has_duplicates(d):
+    return len(d) != len(set(d.values()))
+
 def possible_compact(node_colours):
     """Check if compact colouring is still possible for node.
     """
+    if has_duplicates(node_colours):
+        return False
     no_of_edges = len(node_colours)
     node_colours = {k: v for k, v in node_colours.items() if v != None}
     if len(node_colours) == 0:
         return True
     max_colour = max(node_colours.values())
     min_colour = min(node_colours.values())
-    return max_colour - min_colour < no_of_edges
+    possible = max_colour - min_colour < no_of_edges
+    logger.debug('possible_compact() %s', possible)
+    return possible
 
 def gap_to_fill(node_colours):
     """Identify colours needed to fill the interval.
@@ -186,8 +193,10 @@ def possibilities(graph, node):
     return possibilities
 
 def those_nodes_can_be_compact(graph, colouring, those_nodes):
+    logger.debug('those_nodes_can_be_compact()')
     for this_node in those_nodes:
         this_node_colours = node_colouring(graph, colouring, this_node)
+        logger.debug('this_node_colours: %s', this_node_colours)
         if not possible_compact(this_node_colours):
             return False
     return True
@@ -213,6 +222,17 @@ class SearchNode:
                         pprint.pformat(self.possibilities))
         return possibility
 
+    def current_colouring(self):
+        logger.debug('current colouring()')
+        colours = self.colouring
+        logger.debug('self.colouring = %s', colours)
+        node = self.prev
+        while node.prev != None and node.colouring != None:
+            logger.debug('node.colouring = %s', node.colouring)
+            colours = dict(colours.items() + node.colouring.items())
+            node = node.prev
+        return colours
+
 logger.info('Reading graph from file')
 
 graph = read_graph_from_file('graph1')
@@ -234,27 +254,62 @@ logger.info('Next possible node %s colouring: %s', \
 current_search_node = SearchNode(colouring, root_search_node)
 root_search_node.add_child(current_search_node)
 
-# ... from here I am building the tree for now
+# ...
 
-edges_remaining = edges_remaining(graph, colouring)
-nodes_remaining = nodes_remaining(graph, edges_remaining)
+edges_left = edges_remaining(graph, colouring)
+nodes_left = nodes_remaining(graph, edges_left)
+logger.info('--')
 logger.info('Nodes sorted by remaining edges: %s', \
-    pprint.pformat( [(node, edges_remaining[node])  \
-                            for node in nodes_remaining] ) )
+    pprint.pformat( [(node, edges_left[node])  \
+                            for node in nodes_left] ) )
+compact_not_violated = \
+    those_nodes_can_be_compact(graph, colouring, graph.nodes())
+logger.info('Remaining nodes can still be compact? %s', compact_not_violated)
 
-can_be_compact = \
-    those_nodes_can_be_compact(graph, colouring, nodes_remaining)
-logger.info('Remaining nodes can still be compact? %s', can_be_compact)
-
-current_node = nodes_remaining[0]
+current_node = nodes_left[0]
 node_colours = node_colouring(graph, colouring, current_node)
 logger.info('Picking node %s: coloured %s', current_node, node_colours)
-compact = 'Yes' if is_compact(node_colours) else 'No'
-logger.info('Compact?  %s', compact)
-possible = 'Yes' if possible_compact(node_colours) else 'no'
-logger.info('Possible? %s', possible)
-logger.info('Possible colourings: %s', pprint.pformat(remaining_colourings(node_colours)))
 
-# ...and from this can take first element and trim until empty
+compact = is_compact(node_colours)
+logger.info('Compact? %s', compact)
 
-#print 
+possibilities = remaining_colourings(node_colours)
+current_search_node.possible_leaf_colourings(possibilities)
+logger.info('Possible colourings: %s', pprint.pformat(possibilities))
+logger.info('Inserted all possible node %s ' + \
+                'colourings into Search Node', current_node)
+
+# ... from here I am building the tree for now
+
+logger.info('--')
+logger.info('Picking possible colouring from current Search Node')
+logger.info('if None, need to go up')
+possibility = current_search_node.pop_possibility()
+logger.info('Possibility: %s', possibility)
+
+prev_search_node = current_search_node
+current_search_node = SearchNode(possibility, prev_search_node)
+prev_search_node.add_child(current_search_node)
+logger.info('New Search Node added')
+colouring = current_search_node.current_colouring()
+logger.info('Current colouring: %s', colouring)
+
+if those_nodes_can_be_compact(graph, colouring, graph.nodes()):
+    logger.info('Compact not violated')
+    edges_left = edges_remaining(graph, colouring)
+    nodes_left = nodes_remaining(graph, edges_left)
+    logger.info('--')
+    logger.info('Nodes sorted by remaining edges: %s', \
+        pprint.pformat( [(node, edges_left[node])  \
+                                for node in nodes_left] ) )
+    compact_not_violated = \
+        those_nodes_can_be_compact(graph, colouring, graph.nodes())
+    logger.info('Remaining nodes can still be compact? %s', compact_not_violated)
+
+    current_node = nodes_left[0]
+    node_colours = node_colouring(graph, colouring, current_node)
+    logger.info('Picking node %s: coloured %s', current_node, node_colours)
+
+    #...
+else:
+    logger.info('Compact violated')
