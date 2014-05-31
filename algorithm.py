@@ -10,27 +10,12 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def is_compact(node_colouring):
-    """Check if given colouring for node is compact.
-    """
-    node_colouring2 = {k: v for k, v in node_colouring.items() if v != None}
-    if len(node_colouring) in [0, 1]:
-        return True
-    range_start = min(node_colouring2.values())
-    expected_range = range(range_start, range_start \
-                                + len(node_colouring.values()))
-    return all(colour in expected_range for colour in node_colouring.values())
-
-def format_colouring(colouring):
-    """Put nodes in edges signatures within colouring in alphabetic order.
-    """
-    return {tuple(sorted(key)): colouring[key] for key in colouring}
-
 def format_edges(edges):
     """Put nodes in edges signatures in alphabetic order.
     """
     return [tuple(sorted(edge)) for edge in edges]
 
+# public
 def init_nodes(graph):
     """Form list of graph nodes sorted by degrees.
     """
@@ -40,6 +25,7 @@ def init_nodes(graph):
                 in sorted(zip(degrees, nodes), reverse=True)]
     return sorted_by_degrees
 
+# public
 def edges_remaining(graph, colouring):
     """Count edges yet to be coloured for each node. Put the counts in dict.
     """
@@ -48,6 +34,7 @@ def edges_remaining(graph, colouring):
     return {node: graph.degree(node) - c0[node] - c1[node] \
                     for node in graph.nodes()}
 
+# public
 def nodes_remaining(graph, edges_remaining):
     """Form list of nodes sorted by adjacent edges yet to be coloured 
        with 0 values excluded.
@@ -57,6 +44,7 @@ def nodes_remaining(graph, edges_remaining):
     nodes_remaining.sort(key = lambda x : edges_remaining[x])
     return nodes_remaining
 
+# public
 def node_colouring(graph, colouring, node):
     """Form dict representation of colouring adjacent to given node. 
        None for not coloured yet.
@@ -172,6 +160,7 @@ def edges_to_colours_ideas_matchings_as_dict(matchings_lists_list):
             {x[0]: x[1] for x in matching_list})
     return matchings_dicts_list
 
+# export
 def remaining_colourings(node_colours):
     """Get all possible colourings of remaining blank egdes.
     """
@@ -181,6 +170,7 @@ def remaining_colourings(node_colours):
         edges_to_colours_ideas_matchings(blank_edges, colours_ideas)
     return edges_to_colours_ideas_matchings_as_dict(edge_colour_pairs)
 
+# export
 def possibilities(graph, node):
     """Get all possible initial colourings for given node of highest degree.
     """
@@ -194,6 +184,7 @@ def possibilities(graph, node):
     logger.debug('Possibilities are:\n%s\n', pprint.pformat(possibilities))
     return possibilities
 
+# export
 def those_nodes_can_be_compact(graph, colouring, those_nodes):
     """Goes through nodes in a given list and for each checks
        if adjacent edges can still be coloured compactly.
@@ -252,11 +243,7 @@ current_search_node.possible_leaf_colourings( \
 logger.info('Inserted all possible node %s colourings into root Search Node', \
              nodes_by_degrees[0])
 
-a = 100
-
-while a > 0:
-    logger.info('a = %s', a)
-
+while True:
     next_possible_colouring = current_search_node.pop_possibility()
     logger.info('Next possible colouring: %s', \
                     pprint.pformat(next_possible_colouring))
@@ -268,7 +255,6 @@ while a > 0:
             break
         current_search_node = current_search_node.prev
         logger.info('Going up in tree')
-        a -= 1
         continue
 
     prev_search_node = current_search_node
@@ -307,5 +293,3 @@ while a > 0:
         logger.info('Compact violated')
         current_search_node = current_search_node.prev
         logger.info('Going up in tree')
-
-    a -= 1
