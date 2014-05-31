@@ -70,6 +70,8 @@ def node_colouring(graph, colouring, node):
     return node_colouring
 
 def has_duplicates(d):
+    """Checks if there are duplicates in list.
+    """
     return len(d) != len(set(d.values()))
 
 def possible_compact(node_colours):
@@ -193,6 +195,9 @@ def possibilities(graph, node):
     return possibilities
 
 def those_nodes_can_be_compact(graph, colouring, those_nodes):
+    """Goes through nodes in a given list and for each checks
+       if adjacent edges can still be coloured compactly.
+    """
     logger.debug('those_nodes_can_be_compact()')
     for this_node in those_nodes:
         this_node_colours = node_colouring(graph, colouring, this_node)
