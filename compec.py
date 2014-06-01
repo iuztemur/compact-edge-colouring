@@ -5,13 +5,25 @@ import argparse
 from pprint import pformat
 
 def main(args):
+    with open('compec.log', 'w'):
+        pass
+
     if args.debug:
         logger.info("Logging level set to DEBUG")
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(filename='compec.log', level=logging.DEBUG)
+    else:
+        logger.info("Logging level set to INFO")
+        logging.basicConfig(filename='compec.log', level=logging.INFO)
+
     import algorithm, printer # must be here for level to take effect
 
     colouring = algorithm.colour_graph(args.graph_file)
     logger.info("Result:\n%s", pformat(colouring))
+    
+    if colouring != None:
+        print pformat(colouring)
+    else:
+        print 'could not find colouring for graph'
 
     if args.output != None and colouring != None:
         printer.print_colouring(colouring, args.output)
