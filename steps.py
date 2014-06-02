@@ -10,7 +10,6 @@ def format_edges(edges):
     """
     return [tuple(sorted(edge)) for edge in edges]
 
-# public
 def init_nodes(graph):
     """Form list of graph nodes sorted by degrees.
     """
@@ -20,7 +19,6 @@ def init_nodes(graph):
                 in sorted(zip(degrees, nodes), reverse=True)]
     return sorted_by_degrees
 
-# public
 def edges_remaining(graph, colouring):
     """Count edges yet to be coloured for each node. Put the counts in dict.
     """
@@ -29,7 +27,6 @@ def edges_remaining(graph, colouring):
     return {node: graph.degree(node) - c0[node] - c1[node] \
                     for node in graph.nodes()}
 
-# public
 def nodes_remaining(graph, edges_remaining):
     """Form list of nodes sorted by adjacent edges yet to be coloured 
        with 0 values excluded.
@@ -39,7 +36,6 @@ def nodes_remaining(graph, edges_remaining):
     nodes_remaining.sort(key = lambda x : edges_remaining[x])
     return nodes_remaining
 
-# public
 def node_colouring(graph, colouring, node):
     """Form dict representation of colouring adjacent to given node. 
        None for not coloured yet.
@@ -76,6 +72,8 @@ def gap_to_fill(node_colours):
     """Identify colours needed to fill the interval.
     """
     node_colours = {k: v for k, v in node_colours.items() if v != None}
+    if len(node_colours) == 0:
+        return []
     max_colour = max(node_colours.values())
     min_colour = min(node_colours.values())
     return [c for c in range(min_colour + 1, max_colour) \
@@ -109,7 +107,10 @@ def surrounding(node_colours, gapping):
 
     The purpose of this function is to identify these possible extentions.
     """
+    logger.debug("surrounding()")
+    logger.debug("gapping:\n%s", pprint.pformat(gapping))
     edges_for_surr = len(none_edges(node_colours)) - len(gapping)
+    logger.debug("edges for surrounding:\n%s", edges_for_surr)
     min_colour = min_edge_colour(node_colours)
     max_colour = max_edge_colour(node_colours)
     places_to_the_left = min(min_colour, edges_for_surr)
@@ -155,7 +156,6 @@ def edges_to_colours_ideas_matchings_as_dict(matchings_lists_list):
             {x[0]: x[1] for x in matching_list})
     return matchings_dicts_list
 
-# export
 def remaining_colourings(node_colours):
     """Get all possible colourings of remaining blank egdes.
     """
@@ -165,7 +165,6 @@ def remaining_colourings(node_colours):
         edges_to_colours_ideas_matchings(blank_edges, colours_ideas)
     return edges_to_colours_ideas_matchings_as_dict(edge_colour_pairs)
 
-# export
 def possibilities(graph, node):
     """Get all possible initial colourings for given node of highest degree.
     """
@@ -179,7 +178,6 @@ def possibilities(graph, node):
     logger.debug('Possibilities are:\n%s\n', pprint.pformat(possibilities))
     return possibilities
 
-# export
 def those_nodes_can_be_compact(graph, colouring, those_nodes):
     """Goes through nodes in a given list and for each checks
        if adjacent edges can still be coloured compactly.

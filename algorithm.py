@@ -63,7 +63,12 @@ def colour_graph(graph_file_path):
             logger.info('Picking node %s coloured:\n%s',
                             current_node, node_colours)
 
-            possibilities = steps.remaining_colourings(node_colours)
+
+            if all(colour is None for colour in node_colours.values()):
+                logger.debug("Node with no colours yet")
+                possibilities = steps.possibilities(graph, current_node)
+            else:
+                possibilities = steps.remaining_colourings(node_colours)
             current_search_node.possible_leaf_colourings(possibilities)
             logger.info('Possible colourings:\n%s', 
                                 pprint.pformat(possibilities))
